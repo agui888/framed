@@ -116,8 +116,9 @@ upstream api_crystal {
 
 ### SSL证书配置
 
-证书存储目录`conf/certificate`
-配置文件`conf/conf.d/main.conf`
+- 证书存储目录`conf/certificate`
+- 配置文件`conf/conf.d/main.conf`
+
 ```
 ssl_certificate             certificate/framed.crt;
 ssl_certificate_key         certificate/framed.key;
@@ -131,6 +132,15 @@ ssl_certificate_key         certificate/framed.key;
 log_format yunlian_main '$remote_addr $remote_user [$time_iso8601] $http_host $api_id $api_path_id "$request" "$scheme://$http_host$request_uri" $request_time $status "$upstream_addr" "$upstream_status" "$upstream_response_time" $request_length $body_bytes_sent "$http_referer" "$http_user_agent" "$http_x_forwarded_for"';
 
 log_format yunlian_main_json '{"remote_addr":"$remote_addr","remote_user":"$remote_user","time_local":"$time_iso8601","http_host":"$http_host","scheme":"$scheme","api_id":"$api_id","api_path_id":"$api_path_id","caller_id":"$caller_id","method":"$request_method","request_uri":"$request_uri","uri":"$orignal_uri","request_time":"$request_time","status":"$status","upstream_addr":"$upstream_addr","upstream_status":"$upstream_status","upstream_response_time":"$upstream_response_time","request_length":"$request_length","body_bytes_sent":"$body_bytes_sent","http_referer":"$http_referer","http_user_agent":"$http_user_agent","http_x_forwarded_for":"$http_x_forwarded_for","upstream_cache_status":"$upstream_cache_status","hostname":"$hostname"}';
+```
+
+### 日志推送
+
+配置文件`conf/conf.d/main.conf`
+
+```
+access_log syslog:server=127.0.0.1:514,facility=local0,tag=,severity=emerg yunlian_main_json;
+access_log syslog:server=127.0.0.1:514,facility=local0,tag=,severity=debug yunlian_main;
 ```
 
 ## 其他问题
