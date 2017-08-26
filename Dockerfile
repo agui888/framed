@@ -48,4 +48,6 @@ EXPOSE 80 443
 
 ENV TZ "Asia/Shanghai"
 
+WORKDIR /opt/openresty/nginx
+
 CMD ["./boot"]
