@@ -3,6 +3,12 @@
 
 ## 安装
 
+### 安装依赖
+
+```
+yum install readline-devel pcre-devel openssl-devel gcc uuid-devel
+```
+
 ### 安装OpenSSL
 
 ```
