@@ -1,5 +1,7 @@
 # framed
 
+> 带WAF和认证功能的网关
+
 ## 安装
 
 ### 安装依赖
@@ -71,6 +73,8 @@ systemctl start framed
 # 替换
 ["api_config_core_api"] = "http://apix.applinzi.com/project.php",
 ```
+
+CoreAPI格式举例: http://apix.applinzi.com/project.php?host=api.hehe.com
 
 ### Redis
 
