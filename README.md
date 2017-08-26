@@ -68,7 +68,7 @@ systemctl start framed
 文件`src/lib/config.lua`
 
 ```
-// 替换
+# 替换
 ["api_config_core_api"] = "http://apix.applinzi.com/project.php",
 ```
 
@@ -77,7 +77,7 @@ systemctl start framed
 文件`src/lib/config.lua`
 
 ```
-// 替换
+# 替换
 ["acl_redis"] = {
     {
         ["ip"] = "192.168.229.200",
