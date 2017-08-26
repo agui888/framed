@@ -28,6 +28,10 @@ openssl version
 
 ### 安装OpenResty
 ```
+cd /usr/local/src
+wget "https://openresty.org/download/openresty-1.11.2.5.tar.gz"
+tar -xzvf openresty-1.11.2.5.tar.gz
+cd openresty-1.11.2.5
 ./configure --prefix=/opt/openresty \
             --with-luajit \
             --without-http_redis2_module \
@@ -37,11 +41,12 @@ openssl version
             --with-http_gunzip_module
 gmake
 gmake install
+mkdir -p /data0/logs/
 ```
 
 安装完毕覆盖`nginx`目录
 
-### 部署`framed.service`
+### 部署 `framed.service`
 
 ```
 [Unit]

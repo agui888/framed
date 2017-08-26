@@ -5,3 +5,4 @@ lualib
 pod
 resty.index
 site
+.DS_Store
