@@ -1,0 +1,54 @@
+server {
+    # listen       192.168.0.89:8090;
+    listen       8090;
+    client_header_buffer_size 5120k;
+    large_client_header_buffers 4 5120k;
+
+    allow 192.168.0.0/24;
+    deny all;
+
+    location ~* ^/ping {
+        content_by_lua_file "src/internal/ping.lua";
+    }
+
+    location ~* ^/host/(.*) {
+        set $domain $1;
+        content_by_lua_file "src/internal/host_config.lua";
+    }
+
+    location ~* ^/path/([0-9]+)/(swagger|caller|policy)$ {
+        set $api_path_id $1;
+        set $config_name $2;
+        content_by_lua_file "src/internal/path_config.lua";
+    }
+
+    location ~* ^/cache/(expire|flush) {
+        set $action $1;
+        content_by_lua_file "src/internal/keys_flush.lua";
+    }
+
+    location ~* ^/status {
+        echo "ok";
+    }
+
+    ##sync mode
+    location /sempost {
+        content_by_lua_file "src/internal/sync_sempost.lua";
+    }
+
+    ##websocket mode
+    location /websocket/ping {
+        content_by_lua_file "src/internal/websocket_ping.lua";
+    }
+
+    ##websocket mode
+    location = /websocket/send {
+        content_by_lua_file "src/internal/websocket_send.lua";
+    }
+
+    ##websocket mode
+    location = /websocket/close {
+        content_by_lua_file "src/internal/websocket_close.lua";
+    }
+
+}

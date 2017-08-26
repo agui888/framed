@@ -1,0 +1,13 @@
+local args = ngx.decode_args(ngx.var.args)
+ngx.var.proxy_url = args["proxy_url"]
+ngx.var.backend_host = args["backend_host"]
+ngx.ctx.ip_list = cjson.decode(args["ip_list"])
+ngx.var.api_id = args["api_id"]
+ngx.var.api_path_id = args["api_path_id"]
+ngx.var.caller_id = args["caller_id"]
+ngx.var.orignal_uri = args["original_uri"]
+ngx.ctx.rate = args["rate"]
+ngx.ctx.rate_limit_redis_key = args["rate_limit_redis_key"]
+ngx.ctx.rate_vcode_white_list_flag = args["rate_vcode_white_list_flag"]
+ngx.ctx.rate_vcode_black_list_flag = args["rate_vcode_black_list_flag"]
+ngx.var.nginx_cache_key = args["nginx_cache_key"] .. ngx.var.uri
