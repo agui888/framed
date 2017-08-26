@@ -1,6 +1,5 @@
 # framed
 
-
 ## 安装
 
 ### 安装依赖
@@ -60,4 +59,53 @@ echo resolver $(awk 'BEGIN{ORS=" "} /nameserver/{print $2}' /etc/resolv.conf | s
 cp framed.service /etc/systemd/system/framed.service
 systemctl enable framed
 systemctl start framed
+```
+
+## 配置
+
+### CoreAPI
+
+文件`src/lib/config.lua`
+
+```
+// 替换
+["api_config_core_api"] = "http://apix.applinzi.com/project.php",
+```
+
+### Redis
+
+文件`src/lib/config.lua`
+
+```
+// 替换
+["acl_redis"] = {
+    {
+        ["ip"] = "192.168.229.200",
+        ["port"] = 6379
+    }
+}
+```
+
+### 后端
+
+文件`conf/conf.d/upstream.conf`
+
+```
+# A2A
+upstream api_prism {
+    # server 192.168.0.89:18080 weight=100;
+    # server 192.168.0.62:18080 weight=100;
+    # server 192.168.0.47:18080 weight=100;
+    # server 192.168.0.86:18080 weight=100;
+    server 192.168.0.86:80 weight=100;
+}
+
+# D2A
+upstream api_crystal {
+    # server 192.168.0.89:18080 weight=100;
+    # server 192.168.0.62:18080 weight=100;
+    # server 192.168.0.47:18080 weight=100;
+    # server 192.168.0.86:18080 weight=100;
+    server 123.59.102.48:13300 weight=100;
+}
 ```
