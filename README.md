@@ -44,25 +44,20 @@ gmake install
 mkdir -p /data0/logs/
 ```
 
-安装完毕覆盖`nginx`目录
+安装完毕覆盖`nginx`目录下必要的目录, 并设置`resolver`
+
+```
+cp -r ./nginx/conf /opt/openresty/nginx/boot/conf
+cp -r ./nginx/src /opt/openresty/nginx/boot/src
+cp -r ./nginx/html /opt/openresty/nginx/boot/html
+echo resolver $(awk 'BEGIN{ORS=" "} /nameserver/{print $2}' /etc/resolv.conf | sed "s/ $/;/g") > /opt/openresty/nginx/conf/resolvers.conf
+
+```
 
 ### 部署 `framed.service`
 
 ```
-[Unit]
-Description=framed - high performance web server
-Documentation=http://openresty.org
-After=network.target remote-fs.target nss-lookup.target
-
-[Service]
-Type=forking
-PIDFile=/opt/openresty/nginx/logs/nginx.pid
-ExecStartPre=/opt/openresty/nginx/sbin/nginx -p /opt/openresty/nginx/ -t -c /opt/openresty/nginx/conf/nginx.conf
-ExecStart=/opt/openresty/nginx/sbin/nginx -p /opt/openresty/nginx/ -c /opt/openresty/nginx/conf/nginx.conf
-ExecReload=/opt/openresty/nginx/sbin/nginx -p /opt/openresty/nginx/ -c /opt/openresty/nginx/conf/nginx.conf -s reload
-ExecStop=/opt/openresty/nginx/sbin/nginx -p /opt/openresty/nginx/ -c /opt/openresty/nginx/conf/nginx.conf -s stop
-PrivateTmp=true
-
-[Install]
-WantedBy=multi-user.target
+cp framed.service /etc/systemd/system/framed.service
+systemctl enable framed
+systemctl start framed
 ```
