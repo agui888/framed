@@ -48,9 +48,23 @@ function _M.delete(key)
 end
 
 function _M.api_config_query(uri, request_method, data)
+    if request_method == 'GET' then
+        local value, value_flag = _M.get(uri)
+        if value_flag ~= 1 and value ~= nil then
+            local table_res_body = cjson.decode(value)
+            if table_res_body and table_res_body["projects"] and type(table_res_body["projects"]) == "table" then
+                ngx.log(ngx.ERR, "cached: ", uri)
+                return true, table_res_body["projects"]
+            end
+        end
+    end
     local res = util.send_http(uri, request_method, data)
     local table_res_body = cjson.decode(res.body)
     if table_res_body and table_res_body["projects"] and type(table_res_body["projects"]) == "table" then
+        if request_method == 'GET' then
+            _M.set(uri, res.body, 10)
+        end
+        ngx.log(ngx.ERR, "cache miss: ", uri)
         return true, table_res_body["projects"]
     end
     return false, nil
