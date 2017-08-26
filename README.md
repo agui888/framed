@@ -113,3 +113,34 @@ upstream api_crystal {
     server 123.59.102.48:13300 weight=100;
 }
 ```
+
+### SSL证书配置
+
+证书存储目录`conf/certificate`
+配置文件`conf/conf.d/main.conf`
+```
+ssl_certificate             certificate/framed.crt;
+ssl_certificate_key         certificate/framed.key;
+```
+
+### 日志格式
+
+文件`conf/nginx.conf`
+
+```
+log_format yunlian_main '$remote_addr $remote_user [$time_iso8601] $http_host $api_id $api_path_id "$request" "$scheme://$http_host$request_uri" $request_time $status "$upstream_addr" "$upstream_status" "$upstream_response_time" $request_length $body_bytes_sent "$http_referer" "$http_user_agent" "$http_x_forwarded_for"';
+
+log_format yunlian_main_json '{"remote_addr":"$remote_addr","remote_user":"$remote_user","time_local":"$time_iso8601","http_host":"$http_host","scheme":"$scheme","api_id":"$api_id","api_path_id":"$api_path_id","caller_id":"$caller_id","method":"$request_method","request_uri":"$request_uri","uri":"$orignal_uri","request_time":"$request_time","status":"$status","upstream_addr":"$upstream_addr","upstream_status":"$upstream_status","upstream_response_time":"$upstream_response_time","request_length":"$request_length","body_bytes_sent":"$body_bytes_sent","http_referer":"$http_referer","http_user_agent":"$http_user_agent","http_x_forwarded_for":"$http_x_forwarded_for","upstream_cache_status":"$upstream_cache_status","hostname":"$hostname"}';
+```
+
+## 其他问题
+
+### 配置防火墙
+
+如果Centos7开启了防火墙，通过以下命令开启`80`和`443`端口
+
+```
+sudo firewall-cmd --zone=public --permanent --add-service=https
+sudo firewall-cmd --zone=public --permanent --add-service=http
+sudo firewall-cmd --reload
+```
