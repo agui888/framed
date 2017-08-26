@@ -7,3 +7,4 @@ scgi_temp
 uwsgi_temp
 .DS_Store
 sbin
+conf/resolvers.conf
