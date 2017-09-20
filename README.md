@@ -48,9 +48,9 @@ mkdir -p /data0/logs/
 安装完毕覆盖`nginx`目录下必要的目录, 并设置`resolver`
 
 ```
-cp -r ./nginx/conf /opt/openresty/nginx/boot/conf
-cp -r ./nginx/src /opt/openresty/nginx/boot/src
-cp -r ./nginx/html /opt/openresty/nginx/boot/html
+cp -r ./nginx/conf /opt/openresty/nginx/conf
+cp -r ./nginx/src /opt/openresty/nginx/src
+cp -r ./nginx/html /opt/openresty/nginx/html
 echo resolver $(awk 'BEGIN{ORS=" "} /nameserver/{print $2}' /etc/resolv.conf | sed "s/ $/;/g") > /opt/openresty/nginx/conf/resolvers.conf
 
 ```
@@ -158,13 +158,13 @@ sudo firewall-cmd --reload
 ### Docker方式运行
 
 ```
-docker run --name=framed -it -p 8888:80 -p 4443:443 && \
-  -e FRAMED_CORE_API='http://apix.applinzi.com/project.php' && \
-  -e FRAMED_REDIS_HOST='192.168.229.200' && \
-  -e FRAMED_REDIS_PORT=6379 && \
-  -e FRAMED_BACKEND_PRISM_HOST='123.59.102.48' && \
-  -e FRAMED_BACKEND_PRISM_PORT='13300' && \
-  -e FRAMED_BACKEND_CRYSTAL_HOST='123.59.102.48' && \
-  -e FRAMED_BACKEND_CRYSTAL_PORT='13300' && \
+docker run --name=framed -it -p 8888:80 -p 4443:443 \
+  -e FRAMED_CORE_API='http://apix.applinzi.com/project.php' \
+  -e FRAMED_REDIS_HOST='192.168.229.200' \
+  -e FRAMED_REDIS_PORT=6379 \
+  -e FRAMED_BACKEND_PRISM_HOST='123.59.102.48' \
+  -e FRAMED_BACKEND_PRISM_PORT='18080' \
+  -e FRAMED_BACKEND_CRYSTAL_HOST='123.59.102.48' \
+  -e FRAMED_BACKEND_CRYSTAL_PORT='18080' \
   cloudmario/framed
 ```

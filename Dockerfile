@@ -6,7 +6,7 @@ RUN yum -y update
 RUN yum clean all
 
 # 安装依赖
-RUN yum install readline-devel pcre-devel openssl-devel gcc uuid-devel
+RUN yum -y --nogpgcheck install readline-devel pcre-devel openssl-devel gcc uuid-devel wget perl make
 
 # OpenSSL
 RUN cd /usr/local/src && \
@@ -18,7 +18,7 @@ RUN cd /usr/local/src && \
   make && \
   make test && \
   make install && \
-  mv /usr/bin/openssl /usr/bin/openssl_1.0.1e && \
+  (mv /usr/bin/openssl /usr/bin/openssl_1.0.1e || true) && \
   ln -s /usr/local/ssl/bin/openssl /usr/bin/openssl && \
   openssl version
 
@@ -38,16 +38,17 @@ RUN cd /usr/local/src && \
   gmake install && \
   mkdir -p /data0/logs/
 
-COPY ./nginx/conf /opt/openresty/nginx/boot/conf
-COPY ./nginx/src /opt/openresty/nginx/boot/src
-COPY ./nginx/html /opt/openresty/nginx/boot/html
+COPY ./nginx/conf /opt/openresty/nginx/conf
+COPY ./nginx/src /opt/openresty/nginx/src
+COPY ./nginx/html /opt/openresty/nginx/html
+COPY ./boot /opt/openresty/boot
 
-RUN chmod +x /opt/openresty/nginx/boot
+RUN chmod +x /opt/openresty/boot
 
 EXPOSE 80 443
 
 ENV TZ "Asia/Shanghai"
 
-WORKDIR /opt/openresty/nginx
+WORKDIR /opt/openresty
 
 CMD ["./boot"]
