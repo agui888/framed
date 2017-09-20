@@ -7,7 +7,7 @@
 ### 安装依赖
 
 ```
-yum install readline-devel pcre-devel openssl-devel gcc uuid-devel
+yum -y --nogpgcheck install readline-devel pcre-devel openssl-devel gcc uuid-devel wget perl make
 ```
 
 ### 安装OpenSSL
