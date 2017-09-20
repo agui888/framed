@@ -117,7 +117,7 @@ upstream api_crystal {
 ### SSL证书配置
 
 - 证书存储目录`conf/certificate`
-- 配置文件`conf/conf.d/main.conf`
+- 配置文件`conf/conf.d/main-ssl.conf`
 
 ```
 ssl_certificate             certificate/framed.crt;
@@ -136,7 +136,7 @@ log_format yunlian_main_json '{"remote_addr":"$remote_addr","remote_user":"$remo
 
 ### 日志推送
 
-配置文件`conf/conf.d/main.conf`
+配置文件 `conf/conf.d/main.conf` 和 `conf/conf.d/main-ssl.conf`
 
 ```
 access_log syslog:server=127.0.0.1:514,facility=local0,tag=,severity=emerg yunlian_main_json;
@@ -147,7 +147,7 @@ access_log syslog:server=127.0.0.1:514,facility=local0,tag=,severity=debug yunli
 
 ### 配置防火墙
 
-如果Centos7开启了防火墙，通过以下命令开启`80`和`443`端口
+如果Centos7开启了防火墙，通过以下命令开启 `80` 和 `443` 端口
 
 ```
 sudo firewall-cmd --zone=public --permanent --add-service=https
