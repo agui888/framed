@@ -143,7 +143,7 @@ access_log syslog:server=127.0.0.1:514,facility=local0,tag=,severity=emerg yunli
 access_log syslog:server=127.0.0.1:514,facility=local0,tag=,severity=debug yunlian_main;
 ```
 
-## 其他问题
+## 其他说明
 
 ### 配置防火墙
 
@@ -153,4 +153,18 @@ access_log syslog:server=127.0.0.1:514,facility=local0,tag=,severity=debug yunli
 sudo firewall-cmd --zone=public --permanent --add-service=https
 sudo firewall-cmd --zone=public --permanent --add-service=http
 sudo firewall-cmd --reload
+```
+
+### Docker方式运行
+
+```
+docker run --name=framed -it -p 8888:80 -p 4443:443 && \
+  -e FRAMED_CORE_API='http://apix.applinzi.com/project.php' && \
+  -e FRAMED_REDIS_HOST='192.168.229.200' && \
+  -e FRAMED_REDIS_PORT=6379 && \
+  -e FRAMED_BACKEND_PRISM_HOST='123.59.102.48' && \
+  -e FRAMED_BACKEND_PRISM_PORT='13300' && \
+  -e FRAMED_BACKEND_CRYSTAL_HOST='123.59.102.48' && \
+  -e FRAMED_BACKEND_CRYSTAL_PORT='13300' && \
+  cloudmario/framed
 ```

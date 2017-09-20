@@ -1,13 +1,13 @@
 local conf = {
-    ["api_config_core_api"] = "http://apix.applinzi.com/project.php",
+    ["api_config_core_api"] = os.getenv('FRAMED_CORE_API') or "http://apix.applinzi.com/project.php",
     ["acl_redis"] = {
         -- {
         --     ["ip"] = "192.168.0.89",
         --     ["port"] = 6375
         -- },
         {
-            ["ip"] = "192.168.229.200",
-            ["port"] = 6379
+            ["ip"] = os.getenv('FRAMED_REDIS_HOST') or "192.168.229.200",
+            ["port"] = os.getenv('FRAMED_REDIS_PORT') or 6379
         }
     },
     ["api_config_http_uri"] = "http://192.168.0.23:8088/getvalue",

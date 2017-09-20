@@ -273,6 +273,10 @@ function main2()
                                 ngx.say(cjson.encode(caller))
                                 ngx.exit(ngx.HTTP_OK)
                             end
+                            if ngx.var.arg_get_env ~= nil then
+                                ngx.say(os.getenv(ngx.var.arg_get_env))
+                                ngx.exit(ngx.HTTP_OK)
+                            end
                             --acl policy
                             local acl_policy_key = project['project_id'] .. "_" .. caller['caller_id']
                             if tonumber(caller['caller_id']) == 0 then
