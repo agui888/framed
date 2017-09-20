@@ -6,13 +6,13 @@
 
 ### 安装依赖
 
-```
+```shell
 yum -y --nogpgcheck install readline-devel pcre-devel openssl-devel gcc uuid-devel wget perl make
 ```
 
 ### 安装OpenSSL
 
-```
+```shell
 cd /usr/local/src
 wget https://www.openssl.org/source/openssl-1.0.2-latest.tar.gz
 tar -zxf openssl-1.0.2-latest.tar.gz -C /usr/local/
@@ -28,7 +28,8 @@ openssl version
 ```
 
 ### 安装OpenResty
-```
+
+```shell
 cd /usr/local/src
 wget "https://openresty.org/download/openresty-1.11.2.5.tar.gz"
 tar -xzvf openresty-1.11.2.5.tar.gz
@@ -47,7 +48,7 @@ mkdir -p /data0/logs/
 
 安装完毕覆盖`nginx`目录下必要的目录, 并设置`resolver`
 
-```
+```shell
 cp -r ./nginx/conf /opt/openresty/nginx/conf
 cp -r ./nginx/src /opt/openresty/nginx/src
 cp -r ./nginx/html /opt/openresty/nginx/html
@@ -57,7 +58,7 @@ echo resolver $(awk 'BEGIN{ORS=" "} /nameserver/{print $2}' /etc/resolv.conf | s
 
 ### 部署 `framed.service`
 
-```
+```shell
 cp framed.service /etc/systemd/system/framed.service
 systemctl enable framed
 systemctl start framed
@@ -149,11 +150,11 @@ access_log syslog:server=127.0.0.1:514,facility=local0,tag=,severity=debug yunli
 
 如果不想修改代码和配置文件，可以使用系统环境变量方式设置 `CoreAPI地址`、`Redis`、`后端`
 
-```
+```shell
 # CoreAPI
 FRAMED_CORE_API
 
-#Redis
+# Redis
 FRAMED_REDIS_HOST
 FRAMED_REDIS_PORT
 
@@ -168,7 +169,7 @@ FRAMED_BACKEND_CRYSTAL_PORT
 
 环境变量修改后重启服务生效:
 
-```
+```shell
 systemctl restart framed
 ```
 
@@ -176,7 +177,7 @@ systemctl restart framed
 
 如果Centos7开启了防火墙，通过以下命令开启 `80` 和 `443` 端口
 
-```
+```shell
 sudo firewall-cmd --zone=public --permanent --add-service=https
 sudo firewall-cmd --zone=public --permanent --add-service=http
 sudo firewall-cmd --reload
@@ -184,7 +185,7 @@ sudo firewall-cmd --reload
 
 ### Docker方式运行
 
-```
+```shell
 docker run --name=framed -it -p 8888:80 -p 4443:443 \
   -e FRAMED_CORE_API='http://apix.applinzi.com/project.php' \
   -e FRAMED_REDIS_HOST='192.168.229.200' \
