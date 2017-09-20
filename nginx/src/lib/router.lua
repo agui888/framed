@@ -3,9 +3,8 @@ local router = {
   _DESCRIPTION = 'A simple router for Lua',
   _LICENSE     = [[
     MIT LICENSE
-    * Copyright (c) 2013 Enrique García Cota
-    * Copyright (c) 2013 Raimon Grau
-    * Copyright (c) 2015 Lloyd Zhou
+    * Copyright (c) 2013 HeheCloud
+    * Copyright (c) 2018 Cloud Mario
     Permission is hereby granted, free of charge, to any person obtaining a
     copy of this software and associated documentation files (the
     "Software"), to deal in the Software without restriction, including
@@ -29,120 +28,168 @@ local COLON_BYTE = string.byte(':', 1)
 local WILDCARD_BYTE = string.byte('*', 1)
 local HTTP_METHODS = {'get', 'post', 'put', 'patch', 'delete', 'trace', 'connect', 'options', 'head'}
 
+
 local function match_one_path(node, path, f)
-  for token in path:gmatch("[^/.]+") do
-    if WILDCARD_BYTE == token:byte(1) then
-      node['WILDCARD'] = {['LEAF'] = f, ['TOKEN'] = token:sub(2)}
-      return
+    local encode_path = ngx.escape_uri(path)
+    local pattern, n, err = ngx.re.gsub(encode_path, "%7B[a-zA-Z0-9-_%]+%7D", "([a-zA-Z0-9-_%]+|)", "i")
+
+    -- ngx.exit(ngx.HTTP_OK)
+    if pattern and n > 0 then
+        pattern = '^' .. pattern .. "$"
+    else
+        pattern = path
     end
-    if COLON_BYTE == token:byte(1) then -- if match the ":", store the param_name in "TOKEN" array.
-      node['TOKEN'] = node['TOKEN'] or {}
-      token = token:sub(2)
-      node = node['TOKEN']
-    end
-    node[token] = node[token] or {}
-    node = node[token]
-  end
-  node["LEAF"] = f
+
+    node[path] = node[path] or {}
+    node[path]['PATTERN'] = pattern
+
+    -- ngx.say('pattern: ' .. node[path]['PATTERN'] or 'nil')
+    node[path]["LEAF"] = f
 end
 
-local function resolve(path, node, params)
-  local _, _, current_token, rest = path:find("([^/.]+)(.*)")
-  if not current_token then return node["LEAF"], params end
+-- local function match_one_path(node, path, f)
+--     for token in path:gmatch("[^/.]+") do
+--         if WILDCARD_BYTE == token:byte(1) then
+--             node['WILDCARD'] = {['LEAF'] = f, ['TOKEN'] = token:sub(2)}
+--             return
+--         end
+--         if COLON_BYTE == token:byte(1) then -- if match the ":", store the param_name in "TOKEN" array.
+--             node['TOKEN'] = node['TOKEN'] or {}
+--             token = token:sub(2)
+--             node = node['TOKEN']
+--         end
+--         node[token] = node[token] or {}
+--         node = node[token]
+--     end
+--     node["LEAF"] = f
+-- end
 
-  if node['WILDCARD'] then
-    params[node['WILDCARD']['TOKEN']] = current_token .. rest
-    return node['WILDCARD']['LEAF'], params
-  end
-
-  if node[current_token] then
-    local f, bindings = resolve(rest, node[current_token], params)
-    if f then return f, bindings end
-  end
-
-  for param_name, child_node in pairs(node['TOKEN'] or {}) do
-    local param_value = params[param_name]
-    params[param_name] = current_token or param_value -- store the value in params, resolve tail path
-
-    local f, bindings = resolve(rest, child_node, params)
-    if f then return f, bindings end
-
-    params[param_name] = param_value -- reset the params table.
-  end
-
-  return false
+local function resolve(uri, node, params)
+    for _, routers in pairs(node) do
+        local encode_uri = ngx.escape_uri(uri)
+        local m, err = ngx.re.match(encode_uri, routers['PATTERN'])
+        if (m and err == nil) or uri == routers['PATTERN'] then
+           return routers["LEAF"], params
+        end
+    end
+    return false
 end
+
+-- local function resolve(path, node, params)
+--     local _, _, current_token, rest = path:find("([^/.]+)(.*)")
+--     if not current_token then
+--         return node["LEAF"], params
+--     end
+--
+--     if node['WILDCARD'] then
+--         params[node['WILDCARD']['TOKEN']] = current_token .. rest
+--         return node['WILDCARD']['LEAF'], params
+--     end
+--
+--     if node[current_token] then
+--         local f, bindings = resolve(rest, node[current_token], params)
+--         if f then
+--             return f, bindings
+--         end
+--     end
+--
+--     for param_name, child_node in pairs(node['TOKEN'] or {}) do
+--         local param_value = params[param_name]
+--         params[param_name] = current_token or param_value -- store the value in params, resolve tail path
+--
+--         local f, bindings = resolve(rest, child_node, params)
+--         if f then
+--             return f, bindings
+--         end
+--
+--         params[param_name] = param_value -- reset the params table.
+--     end
+--
+--     return false
+-- end
 
 local function merge(destination, origin, visited)
-  if type(origin) ~= 'table' then return origin end
-  if visited[origin] then return visited[origin] end
-  if destination == nil then destination = {} end
-
-  for k,v in pairs(origin) do
-    k = merge(nil, k, visited) -- makes a copy of k
-    if destination[k] == nil then
-      destination[k] = merge(nil, v, visited)
+    if type(origin) ~= 'table' then
+        return origin
     end
-  end
+    if visited[origin] then
+        return visited[origin]
+    end
+    if destination == nil then
+        destination = {}
+    end
 
-  return destination
+    for k,v in pairs(origin) do
+        k = merge(nil, k, visited) -- makes a copy of k
+        if destination[k] == nil then
+            destination[k] = merge(nil, v, visited)
+        end
+    end
+
+    return destination
 end
 
 local function merge_params(...)
-  local params_list = {...}
-  local result, visited = {}, {}
+    local params_list = {...}
+    local result, visited = {}, {}
 
-  for i=1, #params_list do
-    merge(result, params_list[i], visited)
-  end
+    for i=1, #params_list do
+        merge(result, params_list[i], visited)
+    end
 
-  return result
+    return result
 end
 
 ------------------------------ INSTANCE METHODS ------------------------------------
 local Router = {}
 
 function Router:resolve(method, path, ...)
-  local node   = self._tree[method]
-  if not node then return nil, ("Unknown method: %s"):format(tostring(method)) end
-  return resolve(path, node, merge_params(...))
+    local node = self._tree[method]
+    if not node then
+        return nil, ("Unknown method: %s"):format(tostring(method))
+    end
+    return resolve(path, node, merge_params(...))
 end
 
 function Router:execute(method, path, ...)
-  local f,params = self:resolve(method, path, ...)
-  if not f then return nil, ('Could not resolve %s %s - %s'):format(tostring(method), tostring(path), tostring(params)) end
-  return true, f(params)
+    local f, params = self:resolve(method, path, ...)
+    if not f then
+        return nil, ('Could not resolve %s %s - %s'):format(tostring(method), tostring(path), tostring(params))
+    end
+    return true, f(params)
 end
 
 function Router:match(method, path, fun)
-  if type(method) == 'string' then -- always make the method to table.
-    method = {[method] = {[path] = fun}}
-  end
-  for m, routes in pairs(method) do
-    for p, f in pairs(routes) do
-      if not self._tree[m] then self._tree[m] = {} end
-      match_one_path(self._tree[m], p, f)
+    if type(method) == 'string' then -- always make the method to table.
+        method = {[method] = {[path] = fun}}
     end
-  end
+    for m, routes in pairs(method) do
+        for p, f in pairs(routes) do
+            if not self._tree[m] then
+                self._tree[m] = {}
+            end
+            match_one_path(self._tree[m], p, f)
+        end
+    end
 end
 
 for _,method in ipairs(HTTP_METHODS) do
-  Router[method] = function(self, path, f)  -- Router.get = function(self, path, f)
-    self:match(method:upper(), path, f)     --   return self:match('GET', path, f)
-  end                                       -- end
+    Router[method] = function(self, path, f)    -- Router.get = function(self, path, f)
+        self:match(method:upper(), path, f)     --   return self:match('GET', path, f)
+    end                                         -- end
 end
 
 Router['any'] = function(self, path, f) -- match any method
-  for _,method in ipairs(HTTP_METHODS) do
-    self:match(method:upper(), path, function(params) return f(params, method) end)
-  end
+    for _,method in ipairs(HTTP_METHODS) do
+        self:match(method:upper(), path, function(params) return f(params, method) end)
+    end
 end
 
 local router_mt = { __index = Router }
 
 ------------------------------ PUBLIC INTERFACE ------------------------------------
 router.new = function()
-  return setmetatable({ _tree = {} }, router_mt)
+    return setmetatable({ _tree = {} }, router_mt)
 end
 
 return router

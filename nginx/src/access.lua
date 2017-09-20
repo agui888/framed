@@ -257,6 +257,11 @@ function main2()
                             ngx.var.backend_type = method_info['backend_type']
                             -- Project ID
                             ngx.var.api_id = project['project_id']
+                            if ngx.var.arg_api_info and ngx.var.arg_api_info == 'yes' then
+                                local matchd_path = base_path .. path
+                                ngx.say('full_path > ' .. full_path)
+                                ngx.exit(ngx.HTTP_OK)
+                            end
                             local caller = auth.auth_request_caller(project['callers'])
                             if caller == nil then
                                 exit_code.err_exit("AuthFail")
@@ -273,6 +278,7 @@ function main2()
                                 ngx.say(cjson.encode(caller))
                                 ngx.exit(ngx.HTTP_OK)
                             end
+
                             if ngx.var.arg_get_env ~= nil then
                                 ngx.say(os.getenv(ngx.var.arg_get_env))
                                 ngx.exit(ngx.HTTP_OK)
