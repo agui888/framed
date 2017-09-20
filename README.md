@@ -145,6 +145,33 @@ access_log syslog:server=127.0.0.1:514,facility=local0,tag=,severity=debug yunli
 
 ## 其他说明
 
+### 用环境变量方式配置
+
+如果不想修改代码和配置文件，可以使用系统环境变量方式设置 `CoreAPI地址`、`Redis`、`后端`
+
+```
+# CoreAPI
+FRAMED_CORE_API
+
+#Redis
+FRAMED_REDIS_HOST
+FRAMED_REDIS_PORT
+
+# Prism后端
+FRAMED_BACKEND_PRISM_HOST
+FRAMED_BACKEND_PRISM_PORT
+
+# Crystal后端
+FRAMED_BACKEND_CRYSTAL_HOST
+FRAMED_BACKEND_CRYSTAL_PORT
+```
+
+环境变量修改后重启服务生效:
+
+```
+systemctl restart framed
+```
+
 ### 配置防火墙
 
 如果Centos7开启了防火墙，通过以下命令开启 `80` 和 `443` 端口
