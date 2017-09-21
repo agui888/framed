@@ -4,6 +4,7 @@ Documentation=http://openresty.org
 After=network.target remote-fs.target nss-lookup.target
 
 [Service]
+EnvironmentFile=-/opt/openresty/nginx/conf/environment
 Type=forking
 PIDFile=/opt/openresty/nginx/logs/nginx.pid
 ExecStartPre=/opt/openresty/nginx/sbin/nginx -p /opt/openresty/nginx/ -t -c /opt/openresty/nginx/conf/nginx.conf

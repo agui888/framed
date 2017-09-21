@@ -150,6 +150,9 @@ access_log syslog:server=127.0.0.1:514,facility=local0,tag=,severity=debug yunli
 
 如果不想修改代码和配置文件，可以使用系统环境变量方式设置 `CoreAPI地址`、`Redis`、`后端`
 
+- systemd管理方式可以修改配置文件: `conf/environment`
+- 其他方式直接设置系统环境变量即可
+
 ```shell
 # CoreAPI
 FRAMED_CORE_API
