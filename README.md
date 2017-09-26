@@ -49,6 +49,9 @@ mkdir -p /data0/logs/
 安装完毕覆盖`nginx`目录下必要的目录, 并设置`resolver`
 
 ```shell
+rm -rf /opt/openresty/nginx/conf
+rm -rf /opt/openresty/nginx/src
+rm -rf /opt/openresty/nginx/html
 cp -r ./nginx/conf /opt/openresty/nginx/conf
 cp -r ./nginx/src /opt/openresty/nginx/src
 cp -r ./nginx/html /opt/openresty/nginx/html
