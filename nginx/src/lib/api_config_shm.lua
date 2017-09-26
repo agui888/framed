@@ -102,7 +102,7 @@ end
 
 
 function _M.get_project_info(self)
-    local ok, project_info = _M.api_config_query(config.get_conf('api_config_core_api') .. '?host=' .. self.host, "GET")
+    local ok, project_info = _M.api_config_query(config.get_conf('api_config_core_api') .. self.host, "GET")
     return ok, project_info
 end
 
