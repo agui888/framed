@@ -1,4 +1,4 @@
-FRAMED_CORE_API='http://apix.applinzi.com/project.php'
+FRAMED_CORE_API='http://apix.applinzi.com/project.php?host='
 FRAMED_REDIS_HOST='192.168.229.200'
 FRAMED_REDIS_PORT=6379
 FRAMED_BACKEND_PRISM_HOST='123.59.102.48'
