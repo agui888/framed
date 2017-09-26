@@ -49,6 +49,8 @@ mkdir -p /data0/logs/
 安装完毕覆盖`nginx`目录下必要的目录, 并设置`resolver`
 
 ```shell
+cd /usr/local/src
+git clone "https://github.com/CloudSide/framed.git"
 rm -rf /opt/openresty/nginx/conf
 rm -rf /opt/openresty/nginx/src
 rm -rf /opt/openresty/nginx/html
