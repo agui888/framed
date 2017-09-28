@@ -31,7 +31,7 @@ local HTTP_METHODS = {'get', 'post', 'put', 'patch', 'delete', 'trace', 'connect
 
 local function match_one_path(node, path, f)
     local encode_path = ngx.escape_uri(path)
-    local pattern, n, err = ngx.re.gsub(encode_path, "%7B[a-zA-Z0-9-_%]+%7D", "([a-zA-Z0-9-_%]+|)", "i")
+    local pattern, n, err = ngx.re.gsub(encode_path, "%7B[a-zA-Z0-9-_%]+%7D", "([a-zA-Z0-9-_%\\.]+|)", "i")
 
     -- ngx.exit(ngx.HTTP_OK)
     if pattern and n > 0 then
