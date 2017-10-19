@@ -334,6 +334,9 @@ function main2()
         {other_arg = 1})         -- into a single "params" table
 
     if not ok then
+	if ngx.var.request_method == 'OPTIONS' then
+	    ngx.exit(ngx.HTTP_OK)
+        end
         -- ngx.status = 200
         exit_code.err_exit("PathInfoNotFound")
         -- ngx.status = 404
