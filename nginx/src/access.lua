@@ -328,7 +328,7 @@ function main2()
             -- ngx.exit(ngx.HTTP_OK)
             -- ngx.print(method .. " " .. full_path .. "caller: " .. caller .. "\n")
             -- ngx.exit(ngx.HTTP_OK)
-        end)
+        end, (method_info['backend_type'] == 'proxy'))
     end
     for base_path, project in pairs(project_info) do
         if project["routers"] ~= nil then

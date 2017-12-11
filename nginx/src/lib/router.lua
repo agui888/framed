@@ -29,16 +29,24 @@ local WILDCARD_BYTE = string.byte('*', 1)
 local HTTP_METHODS = {'get', 'post', 'put', 'patch', 'delete', 'trace', 'connect', 'options', 'head'}
 
 
-local function match_one_path(node, path, f)
+local function match_one_path(node, path, f, is_proxy)
     local encode_path = ngx.escape_uri(path)
     -- local pattern, n, err = ngx.re.gsub(encode_path, "%7B[a-zA-Z0-9-_%]+%7D", "([a-zA-Z0-9-_%\\.]+|)", "i")
 	local pattern, n, err = ngx.re.gsub(encode_path, "%7B[a-zA-Z0-9-_%]+%7D", "([^/]+|)", "i")
-  
+
     -- ngx.exit(ngx.HTTP_OK)
     if pattern and n > 0 then
         pattern = '^' .. pattern .. "$"
     else
         pattern = path
+    end
+
+    if is_proxy then
+        if util.endswith(path, "/") then
+            pattern = '^' .. path .. "((.-)|)$"
+        else
+            pattern = '^' .. path .. "((/.-)|)$"
+        end
     end
 
     node[path] = node[path] or {}
