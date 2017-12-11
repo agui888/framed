@@ -1,3 +1,5 @@
+local util = require "lib.util"
+
 local router = {
   _VERSION     = 'router.lua v2.1.0',
   _DESCRIPTION = 'A simple router for Lua',
@@ -43,9 +45,9 @@ local function match_one_path(node, path, f, is_proxy)
 
     if is_proxy then
         if util.endswith(path, "/") then
-            pattern = '^' .. path .. "((.-)|)$"
+            pattern = '^' .. encode_path .. "(((.-))|)"
         else
-            pattern = '^' .. path .. "((/.-)|)$"
+            pattern = '^' .. encode_path .. "((/(.-))|)"
         end
     end
 
@@ -168,7 +170,7 @@ function Router:execute(method, path, ...)
     return true, f(params)
 end
 
-function Router:match(method, path, fun)
+function Router:match(method, path, fun, is_proxy)
     if type(method) == 'string' then -- always make the method to table.
         method = {[method] = {[path] = fun}}
     end
@@ -177,7 +179,7 @@ function Router:match(method, path, fun)
             if not self._tree[m] then
                 self._tree[m] = {}
             end
-            match_one_path(self._tree[m], p, f)
+            match_one_path(self._tree[m], p, f, is_proxy)
         end
     end
 end
