@@ -12,7 +12,7 @@ RUN yum -y --nogpgcheck install readline-devel pcre-devel openssl-devel gcc uuid
 RUN cd /usr/local/src && \
   wget https://www.openssl.org/source/openssl-1.0.2-latest.tar.gz && \
   tar -zxf openssl-1.0.2-latest.tar.gz -C /usr/local/ && \
-  cd /usr/local/openssl-1.0.2l && \
+  cd /usr/local/openssl-1.0.2n && \
   ./config && \
   make depend && \
   make && \
@@ -31,7 +31,7 @@ RUN cd /usr/local/src && \
             --with-luajit \
             --without-http_redis2_module \
             --with-http_iconv_module \
-            --with-http_ssl_module --with-openssl=/usr/local/openssl-1.0.2l/ \
+            --with-http_ssl_module --with-openssl=/usr/local/openssl-1.0.2n/ \
             --with-luajit-xcflags=-DLUAJIT_ENABLE_LUA52COMPAT \
             --with-http_gunzip_module && \
   gmake && \
