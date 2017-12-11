@@ -4,6 +4,10 @@ if ngx.var.backend_type == 'a2a' then
     ngx.var.proxy_url = "http://api_prism" .. request_uri
 elseif ngx.var.backend_type == 'd2a' then
     ngx.var.proxy_url = "http://api_crystal" .. request_uri
+elseif ngx.var.backend_type == 'proxy' then
+    local full_path = args["full_path"]
+    local req_uri = ngx.re.sub(request_uri, "^" .. full_path, "")
+    ngx.var.proxy_url = ngx.var.proxy_backend_url .. req_uri
 end
 ngx.var.api_id = args["api_id"]
 ngx.var.api_version = args["api_adapter_version"]

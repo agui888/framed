@@ -219,100 +219,132 @@ function main2()
     local router = require "lib.router"
     local router = require 'router'
     local r = router.new()
+    local function build_full_path(base_path, path)
+        local full_path, prefix_path, suffix_path
+        if string.len(base_path) == 0 then
+            prefix_path = ''
+        elseif base_path == '/' then
+            prefix_path = ''
+        else
+            prefix_path = base_path
+            if not util.startswith(base_path, "/") then
+                prefix_path = '/' .. base_path
+            end
+            if util.endswith(prefix_path, "/") then
+                prefix_path = string.sub(prefix_path, 1, string.len(prefix_path) - 1)
+            end
+        end
+        if string.len(path) == 0 then
+            suffix_path = '/'
+        elseif path == '/' then
+            suffix_path = '/'
+        elseif not util.startswith(path, "/") then
+            suffix_path = '/' .. path
+        else
+            suffix_path = path
+        end
+        full_path = prefix_path .. suffix_path
+        return full_path
+    end
+    local function build_handle(project, base_path, path, method, method_info)
+        local full_path = build_full_path(base_path, path)
+        r:match(string.upper(method), full_path, function(params)
+            if method_info['status'] ~= "on" then
+                exit_code.err_exit("ApiPathStatusOff")
+            end
+            -- API ID
+            ngx.var.api_path_id = method_info['api_info_id']
+            ngx.var.backend_type = method_info['backend_type']
+
+            -- PROXY
+            ngx.var.proxy_backend_url = method_info['backend_url'] or ""
+            if method_info['timeout'] ~= nil and method_info['timeout'] > 0 then
+                ngx.var.proxy_timeout = method_info['timeout'] .. 's'
+            else
+                ngx.var.proxy_timeout = '60s'
+            end
+
+            -- Project ID
+            ngx.var.api_id = project['project_id']
+            if ngx.var.arg_api_info and ngx.var.arg_api_info == 'yes' then
+                local matchd_path = base_path .. path
+                ngx.say('full_path > ' .. full_path)
+                ngx.exit(ngx.HTTP_OK)
+            end
+            local caller = auth.auth_request_caller(project['callers'])
+            if caller == nil then
+                exit_code.err_exit("AuthFail")
+            else
+                if caller['auth_mode'] == 'anonymous' then
+                    ngx.var.caller_id = 0
+                else
+                    ngx.var.caller_id = caller['caller_id']
+                end
+                -- local args = {request_uri = request_uri, api_id = project['project_id'], api_adapter_version = project['project_version'], rate = ngx.ctx.rate, rate_limit_redis_key = ngx.ctx.rate_limit_redis_key, rate_vcode_white_list_flag = ngx.ctx.rate_vcode_white_list_flag, rate_vcode_black_list_flag = ngx.ctx.rate_vcode_black_list_flag}
+                -- ngx.exec("/baishancloud-juhe-api/adapter", ngx.encode_args(args))
+            end
+            if ngx.var.arg_caller_info and ngx.var.arg_caller_info == 'yes' then
+                ngx.say(cjson.encode(caller))
+                ngx.exit(ngx.HTTP_OK)
+            end
+
+            if ngx.var.arg_get_env ~= nil then
+                ngx.say(os.getenv(ngx.var.arg_get_env))
+                ngx.exit(ngx.HTTP_OK)
+            end
+            --acl policy
+            local acl_policy_key = project['project_id'] .. "_" .. caller['caller_id']
+            if tonumber(caller['caller_id']) == 0 then
+                acl_policy_key = project['project_id'] .. "_" .. caller['caller_id'] .. "_" .. remote_addr
+            end
+            local limit_result = {OK = 1, FORBIDDEN = 2}
+            local acl_policy = acl_policy:new(acl_policy_key, caller)
+            if acl_policy ~= nil then
+                if acl_policy:ip_black_limit() == limit_result["FORBIDDEN"] then
+                    exit_code.err_exit("RemoteAddrInBlackList")
+                end
+                if acl_policy:ip_white_limit() == limit_result["FORBIDDEN"] then
+                    exit_code.err_exit("RemoteAddrNotInWhiteList")
+                end
+                if acl_policy:right_limit() == limit_result["FORBIDDEN"] then
+                    exit_code.err_exit("CallerMethodError")
+                end
+                if acl_policy:rate_limit() == limit_result["FORBIDDEN"] then
+                    exit_code.err_exit("CallerOverRateLimit")
+                end
+            end
+
+            local args = {
+                request_uri = request_uri,
+                api_id = project['project_id'],
+                api_adapter_version = project['project_version'],
+                rate = ngx.ctx.rate,
+                rate_limit_redis_key = ngx.ctx.rate_limit_redis_key,
+                full_path = full_path
+            }
+            ngx.exec("/baishancloud-juhe-api/adapter", ngx.encode_args(args))
+
+            -- ngx.print(ngx.var.remote_addr .. "\n")
+            -- ngx.exit(ngx.HTTP_OK)
+            -- ngx.print(method .. " " .. full_path .. "caller: " .. caller .. "\n")
+            -- ngx.exit(ngx.HTTP_OK)
+        end)
+    end
     for base_path, project in pairs(project_info) do
+        if project["routers"] ~= nil then
+            for path, method_info in pairs(project["routers"]) do
+                if method_info["request_methods"] ~= nil then
+                    for _, method in ipairs(method_info["request_methods"]) do
+                        build_handle(project, base_path, path, method, method_info)
+                    end
+                end
+            end
+        end
         if project["apis"] ~= nil then
             for path, path_info in pairs(project["apis"]) do
                 if path_info["methods"] ~= nil then
                     for method, method_info in pairs(path_info["methods"]) do
-                        local full_path, prefix_path, suffix_path
-                        if string.len(base_path) == 0 then
-                            prefix_path = ''
-                        elseif base_path == '/' then
-                            prefix_path = ''
-                        else
-                            prefix_path = base_path
-                            if not util.startswith(base_path, "/") then
-                                prefix_path = '/' .. base_path
-                            end
-                            if util.endswith(prefix_path, "/") then
-                                prefix_path = string.sub(prefix_path, 1, string.len(prefix_path) - 1)
-                            end
-                        end
-                        if string.len(path) == 0 then
-                            suffix_path = '/'
-                        elseif path == '/' then
-                            suffix_path = '/'
-                        elseif not util.startswith(path, "/") then
-                            suffix_path = '/' .. path
-                        else
-                            suffix_path = path
-                        end
-                        full_path = prefix_path .. suffix_path
-                        r:match(string.upper(method), full_path, function(params)
-                            if method_info['status'] ~= "on" then
-                                exit_code.err_exit("ApiPathStatusOff")
-                            end
-                            -- API ID
-                            ngx.var.api_path_id = method_info['api_info_id']
-                            ngx.var.backend_type = method_info['backend_type']
-                            -- Project ID
-                            ngx.var.api_id = project['project_id']
-                            if ngx.var.arg_api_info and ngx.var.arg_api_info == 'yes' then
-                                local matchd_path = base_path .. path
-                                ngx.say('full_path > ' .. full_path)
-                                ngx.exit(ngx.HTTP_OK)
-                            end
-                            local caller = auth.auth_request_caller(project['callers'])
-                            if caller == nil then
-                                exit_code.err_exit("AuthFail")
-                            else
-                                if caller['auth_mode'] == 'anonymous' then
-                                    ngx.var.caller_id = 0
-                                else
-                                    ngx.var.caller_id = caller['caller_id']
-                                end
-                                -- local args = {request_uri = request_uri, api_id = project['project_id'], api_adapter_version = project['project_version'], rate = ngx.ctx.rate, rate_limit_redis_key = ngx.ctx.rate_limit_redis_key, rate_vcode_white_list_flag = ngx.ctx.rate_vcode_white_list_flag, rate_vcode_black_list_flag = ngx.ctx.rate_vcode_black_list_flag}
-                                -- ngx.exec("/baishancloud-juhe-api/adapter", ngx.encode_args(args))
-                            end
-                            if ngx.var.arg_caller_info and ngx.var.arg_caller_info == 'yes' then
-                                ngx.say(cjson.encode(caller))
-                                ngx.exit(ngx.HTTP_OK)
-                            end
-
-                            if ngx.var.arg_get_env ~= nil then
-                                ngx.say(os.getenv(ngx.var.arg_get_env))
-                                ngx.exit(ngx.HTTP_OK)
-                            end
-                            --acl policy
-                            local acl_policy_key = project['project_id'] .. "_" .. caller['caller_id']
-                            if tonumber(caller['caller_id']) == 0 then
-                                acl_policy_key = project['project_id'] .. "_" .. caller['caller_id'] .. "_" .. remote_addr
-                            end
-                            local limit_result = {OK = 1, FORBIDDEN = 2}
-                            local acl_policy = acl_policy:new(acl_policy_key, caller)
-                            if acl_policy ~= nil then
-                                if acl_policy:ip_black_limit() == limit_result["FORBIDDEN"] then
-                                    exit_code.err_exit("RemoteAddrInBlackList")
-                                end
-                                if acl_policy:ip_white_limit() == limit_result["FORBIDDEN"] then
-                                    exit_code.err_exit("RemoteAddrNotInWhiteList")
-                                end
-                                if acl_policy:right_limit() == limit_result["FORBIDDEN"] then
-                                    exit_code.err_exit("CallerMethodError")
-                                end
-                                if acl_policy:rate_limit() == limit_result["FORBIDDEN"] then
-                                    exit_code.err_exit("CallerOverRateLimit")
-                                end
-                            end
-
-                            local args = {request_uri = request_uri, api_id = project['project_id'], api_adapter_version = project['project_version'], rate = ngx.ctx.rate, rate_limit_redis_key = ngx.ctx.rate_limit_redis_key}
-                            ngx.exec("/baishancloud-juhe-api/adapter", ngx.encode_args(args))
-
-                            -- ngx.print(ngx.var.remote_addr .. "\n")
-                            -- ngx.exit(ngx.HTTP_OK)
-                            -- ngx.print(method .. " " .. full_path .. "caller: " .. caller .. "\n")
-                            -- ngx.exit(ngx.HTTP_OK)
-                        end)
+                        build_handle(project, base_path, path, method, method_info)
                     end
                 end
             end
