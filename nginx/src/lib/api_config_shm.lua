@@ -48,26 +48,51 @@ function _M.delete(key)
 end
 
 function _M.api_config_query(uri, request_method, data)
-    if request_method == 'GET' then
-        local value, value_flag = _M.get(uri)
-        if value_flag ~= 1 and value ~= nil then
-            local table_res_body = cjson.decode(value)
-            if table_res_body and table_res_body["projects"] and type(table_res_body["projects"]) == "table" then
-                -- ngx.log(ngx.ERR, "cached: ", uri)
-                return true, table_res_body["projects"]
-            end
-        end
-    end
-    local res = util.send_http(uri, request_method, data)
-    local table_res_body = cjson.decode(res.body)
-    if table_res_body and table_res_body["projects"] and type(table_res_body["projects"]) == "table" then
-        if request_method == 'GET' then
-            _M.set(uri, res.body, 10)
-        end
-        -- ngx.log(ngx.ERR, "cache miss: ", uri)
-        return true, table_res_body["projects"]
-    end
-    return false, nil
+	
+	function get_cache() {
+		local value, value_flag = _M.get(uri)
+		if value_flag ~= 1 and value ~= nil then
+			local table_res_body = cjson.decode(value)
+			if table_res_body and table_res_body["projects"] and type(table_res_body["projects"]) == "table" then
+				-- ngx.log(ngx.ERR, "cached: ", uri)
+				return true, table_res_body["projects"]
+			end
+		end
+		return false, nil
+	}
+
+	if request_method == 'GET' then
+		local ok, info = get_cache()
+		if ok then
+			return ok, info
+		end
+	end
+
+	local lock = resty_lock:new("my_locks")
+	local elapsed, err = lock:lock(uri)
+	if not elapsed then
+	    ngx.log(ngx.ERR, "failed to acquire the lock: ", err)
+	end
+
+	local ok, info = get_cache()
+	if ok then
+		lock:unlock()
+		return ok, info
+	end
+
+	local res = util.send_http(uri, request_method, data)
+
+	local table_res_body = cjson.decode(res.body)
+	if table_res_body and table_res_body["projects"] and type(table_res_body["projects"]) == "table" then
+		if request_method == 'GET' then
+			_M.set(uri, res.body, 10)
+		end
+		-- ngx.log(ngx.ERR, "cache miss: ", uri)
+		lock:unlock()
+		return true, table_res_body["projects"]
+	end
+	lock:unlock()
+	return false, nil
 end
 
 function _M.api_config_http(uri, request_method, keyname)
